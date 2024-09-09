@@ -1,0 +1,26 @@
+{
+  "name": "mern-project",
+  "version": "1.0.0",
+  "description": "This is a Mern project to learn backend",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/subratamondal1029/MERN-Project.git"
+  },
+  "keywords": [
+    "MERN",
+    "backend",
+    "web",
+    "dev",
+    "learn"
+  ],
+  "author": "Subrata Mondal",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/subratamondal1029/MERN-Project/issues"
+  },
+  "homepage": "https://github.com/subratamondal1029/MERN-Project#readme"
+}
