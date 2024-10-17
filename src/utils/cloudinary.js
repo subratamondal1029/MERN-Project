@@ -17,6 +17,7 @@ const uploadFile = async (filePath) => {
 
         // if file uploaded
         console.log("File Uploaded", fileResponse);
+        fs.unlinkSync(filePath)
         return fileResponse;
     } catch (error) {
         fs.unlinkSync(filePath)
@@ -24,4 +25,4 @@ const uploadFile = async (filePath) => {
     }
 }
 
-export { uploadFile }
+export default uploadFile
