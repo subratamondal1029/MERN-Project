@@ -150,4 +150,6 @@ const refreshAccessToken = asyncHandler(async (req, res) =>{
             .send(new apiResponse(200, {accessToken, refreshToken}, "New AccessToken Created Successfully"))
 })
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken };
+const getCurrentUser = asyncHandler(async (req, res) => res.send(new apiResponse(200, req.user)))
+
+export { registerUser, loginUser, logoutUser, refreshAccessToken, getCurrentUser };
