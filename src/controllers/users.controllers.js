@@ -1,4 +1,5 @@
 import fs from "fs"
+import jwt from "jsonwebtoken"
 import asyncHandler from "../utils/asyncHandler.js";
 import apiError from "../utils/apiError.js";
 import apiResponse from "../utils/apiResponse.js"
@@ -14,6 +15,10 @@ const generateAccessAndRefreshTokens = async (userId) =>{
   user.save({validateBeforeSave: false})
 
   return {accessToken, refreshToken}
+}
+const options = {
+  httpOnly: true,
+  secure: true
 }
 
 const registerUser = asyncHandler(async (req, res) => {
@@ -101,10 +106,6 @@ const loginUser = asyncHandler(async (req, res) =>{
   const {accessToken, refreshToken} = await generateAccessAndRefreshTokens(user._id)
 
   const resposeUser = await User.findById(user._id).select("-password -refreshToken")
-  const options = {
-    httpOnly: true,
-    secure: true
-  }
 
   return res
           .cookie("accessToken", accessToken, options)
@@ -124,10 +125,6 @@ const logoutUser = asyncHandler(async (req, res) =>{
       new: true
     }
   )
-  const options = {
-    httpOnly: true,
-    secure: true
-  }
 
   res.clearCookie("accessToken", options)
       .clearCookie("refreshToken", options)
@@ -135,4 +132,22 @@ const logoutUser = asyncHandler(async (req, res) =>{
 
 })
 
-export { registerUser, loginUser, logoutUser };
+const refreshAccessToken = asyncHandler(async (req, res) =>{
+  const clientRefreshToken = req.cookies?.refreshToken || req.body?.refreshToken || req.header()?.Authorization;
+  if (!clientRefreshToken) throw new apiError(401, "Unauthorized request")
+
+  const decodedRefreshToken = jwt.verify(clientRefreshToken, process.env.REFRESH_TOKEN_SECRET)
+
+  const user = await User.findById(decodedRefreshToken?._id)
+  if (!user || user?.refreshToken !== clientRefreshToken) throw new apiError(401, "Invalid Refresh Token")
+
+  const {accessToken, refreshToken} = await generateAccessAndRefreshTokens(user._id)
+
+  return res
+            .status(201)
+            .cookie("accessToken", accessToken, options)
+            .cookie("refreshToken", refreshToken, options)
+            .send(new apiResponse(200, {accessToken, refreshToken}, "New AccessToken Created Successfully"))
+})
+
+export { registerUser, loginUser, logoutUser, refreshAccessToken };
