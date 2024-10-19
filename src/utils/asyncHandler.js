@@ -13,9 +13,10 @@ import apiError from "./apiError.js";
 const asyncHandler = (fn) => (
   (req, res, next) => {
     Promise.resolve(fn(req, res, next)).catch((err) => {
-      const error = new apiError(err.code, error.message || "Internal Server Error")
+      const error = new apiError(err.statusCode, err.message || "Internal Server Error")
+
       res
-        .status(error.code || 500)
+        .status(error.statusCode || 500)
         .json(error);
     });
   }

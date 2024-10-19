@@ -6,10 +6,10 @@ import {app} from "./app.js"
 const port = process.env.PORT || 8000;
 
 dotenv.config({
-    path: './env'
+    path: './.env'
 })
 
 app.listen(port, async ()=> {
-    // await connectDB() //TODO: confirm the criditial of mongodb and connect
+    await connectDB()
     console.log(`Your Server is Sarted in port ${port}`)
 })

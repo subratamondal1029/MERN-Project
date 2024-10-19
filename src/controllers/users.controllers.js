@@ -1,3 +1,4 @@
+import fs from "fs"
 import asyncHandler from "../utils/asyncHandler.js";
 import apiError from "../utils/apiError.js";
 import apiResponse from "../utils/apiResponse.js"
@@ -8,29 +9,47 @@ const registerUser = asyncHandler(async (req, res) => {
   // get user details
   const { fullName, username, email, password } = req.body;
 
+  // data validation
   if (
     [fullName, email, username, password].some((field) => field?.trim() === "")
   ) {
     throw new apiError(400, "All Fields Are Required");
   }
 
+  // check existing data conflict
   const existedUser = await User.findOne({
     $or: [{ username }, { email }],
   });
 
-  if (existedUser)
+  if (existedUser){
     throw new apiError(409, "User with same Email or Username already exist!");
+}
 
-  const avatarLocalPath = req.files?.avatar[0]?.path;
-  const coverImageLocalPath = req.files?.coverImage[0]?.path;
+// handle file upload and validation
+  const uploadedFiles = req.files;
+
+  if(!uploadedFiles || !uploadedFiles.avatar || uploadedFiles.avatar.length === 0){
+    throw new apiError(400, "Avatar is Required")
+  }
   
-  if(!avatarLocalPath) throw new apiError(400, "Avatar is Required")
+  const avatarLocalPath = uploadedFiles.avatar[0].path;
+  let coverImageLocalPath;
+  if(uploadedFiles.coverImage && uploadedFiles.coverImage.length > 0){
+    coverImageLocalPath = uploadedFiles.coverImage[0].path
+  }
 
+  // cloudinary file upload
     const avatar = await uploadOnCloudinary(avatarLocalPath)
-    const coverImage = await uploadOnCloudinary(coverImageLocalPath)
+    let coverImage;
+    
+    if(!avatar){
+      fs.unlinkSync(coverImageLocalPath)
+      throw new apiError(400, "Avatar is Required")
+    }else{
+      coverImage = await uploadOnCloudinary(coverImageLocalPath)
+    }
 
-    if(!avatar) throw new apiError(400, "Avatar is Required")
-
+    // new user Creation
   const user = await User.create({
       fullName,
       email,
@@ -40,11 +59,12 @@ const registerUser = asyncHandler(async (req, res) => {
       coverImage: coverImage?.url || ""
     })
 
+    // Check is the created and make a response data
    const createdUser = await User.findById(user._id).select(
     "-password -refreshToken"
    )
 
-   if(!createdUser) throw new apiError(500, "Internal Server Erorr while user Creation")
+   if(!createdUser){ throw new apiError(500, "Internal Server Erorr while user Creation")}
 
     return res.status(201).json(new apiResponse(201, createdUser, "User Register Successfully"))
 
