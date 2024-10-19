@@ -2,10 +2,10 @@
   "name": "mern-project",
   "version": "1.0.0",
   "description": "This is a Mern project to learn backend",
-  "main": "server.js",
+  "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "nodemon -r dotenv/config --experimental-json-modules src/server.js"
+    "dev": "nodemon -r dotenv/config --experimental-json-modules src/index.js"
   },
   "repository": {
     "type": "git",
