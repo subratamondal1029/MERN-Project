@@ -17,7 +17,8 @@ const uploadFile = async (filePath) => {
 
         // if file uploaded
         console.log("File Uploaded", fileResponse);
-        fs.unlinkSync(filePath)
+        console.log("File url", fileResponse.url);
+        // fs.unlinkSync(filePath) //TODO: for testing
         return fileResponse;
     } catch (error) {
         fs.unlinkSync(filePath)
