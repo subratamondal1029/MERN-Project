@@ -5,6 +5,17 @@ import apiResponse from "../utils/apiResponse.js"
 import { User } from "../models/user.model.js";
 import uploadOnCloudinary from "../utils/cloudinary.js"
 
+const generateAccessAndRefreshTokens = async (userId) =>{
+  const user = await User.findById(userId)
+  const accessToken = user.generateAccessToken()
+  const refreshToken = user.generateRefreshToken()
+
+  user.refreshToken = refreshToken
+  user.save({validateBeforeSave: false})
+
+  return {accessToken, refreshToken}
+}
+
 const registerUser = asyncHandler(async (req, res) => {
   // get user details
   const { fullName, username, email, password } = req.body;
@@ -70,4 +81,58 @@ const registerUser = asyncHandler(async (req, res) => {
 
 });
 
-export { registerUser };
+const loginUser = asyncHandler(async (req, res) =>{
+  const {username, email, password} = req.body;
+
+  if(!username && !email){
+    throw new apiError(400, "username or email is required")
+  }
+
+  const user = await User.findOne({
+    $or: [{username}, {email}]
+  })
+
+  if(!user) throw new apiError(404, "User with your email or username is not exist")  
+
+  const isPasswordValid = await user.isPasswordCorrect(password)
+  if (!isPasswordValid) throw new apiError(401, "wrong login credintials")
+
+  // create accessToken and refreshToken
+  const {accessToken, refreshToken} = await generateAccessAndRefreshTokens(user._id)
+
+  const resposeUser = await User.findById(user._id).select("-password -refreshToken")
+  const options = {
+    httpOnly: true,
+    secure: true
+  }
+
+  return res
+          .cookie("accessToken", accessToken, options)
+          .cookie("refreshToken", refreshToken, options)
+          .json(new apiResponse(200, {user: resposeUser, accessToken, refreshToken}, "Loged In successFully"))
+
+})
+
+const logoutUser = asyncHandler(async (req, res) =>{
+  
+  await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $unset: {refreshToken: 1}
+    },
+    {
+      new: true
+    }
+  )
+  const options = {
+    httpOnly: true,
+    secure: true
+  }
+
+  res.clearCookie("accessToken", options)
+      .clearCookie("refreshToken", options)
+      .json(new apiResponse(200, null, "User logout successfully"))
+
+})
+
+export { registerUser, loginUser, logoutUser };
