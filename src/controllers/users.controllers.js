@@ -150,6 +150,21 @@ const refreshAccessToken = asyncHandler(async (req, res) =>{
             .send(new apiResponse(200, {accessToken, refreshToken}, "New AccessToken Created Successfully"))
 })
 
-const getCurrentUser = asyncHandler(async (req, res) => res.send(new apiResponse(200, req.user)))
+const getCurrentUser = asyncHandler(async (req, res) => res.send(new apiResponse(200, req.user, "current user fetched successfully")))
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken, getCurrentUser };
+const changePassword = asyncHandler(async (req, res) => {
+  const {oldPassword, newPassword} = req.body
+
+  const user = await User.findById(req.user._id)
+
+  if(!user) throw new apiError(404, "User not found")
+
+  const isPasswordCorrect = await user.isPasswordCorrect(oldPassword)
+  if(!isPasswordCorrect) throw new apiError(400, "Old Password is not correct")
+
+  user.password = newPassword
+  user.save({validateBeforeSave: false})
+return res.send(new apiResponse(200, {}, "Password changed successfully"))
+})
+
+export { registerUser, loginUser, logoutUser, refreshAccessToken, getCurrentUser, changePassword };
