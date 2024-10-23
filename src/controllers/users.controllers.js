@@ -234,6 +234,8 @@ const updatedUserAvatar = asyncHandler(async (req, res) => {
 
   if (!cloudinaryRes?.url)
     throw new apiError(500, "Error while uploading avatar");
+
+  fs.unlinkSync(avatarLocalPath);
   await deleteCloudinaryFile(req.user.avatar); //NOTE: assignment from tutorial
   const user = await User.findByIdAndUpdate(
     req.user._id,
@@ -255,6 +257,7 @@ const updatedUserCoverImage = asyncHandler(async (req, res) => {
   if (!coverImage?.url)
     throw new apiError(500, "Error while uploading Cover Image");
 
+  fs.unlinkSync(coverImageLocalPath);
   await deleteCloudinaryFile(req.user.coverImage); //NOTE: assignment from tutorial
   const user = await User.findByIdAndUpdate(
     req.user._id,
