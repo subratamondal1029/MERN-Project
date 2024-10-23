@@ -4,7 +4,10 @@ import asyncHandler from "../utils/asyncHandler.js";
 import apiError from "../utils/apiError.js";
 import apiResponse from "../utils/apiResponse.js";
 import { User } from "../models/user.model.js";
-import uploadOnCloudinary from "../utils/cloudinary.js";
+import {
+  uploadFileOnCloudinary,
+  deleteCloudinaryFile,
+} from "../utils/cloudinary.js";
 
 const generateAccessAndRefreshTokens = async (userId) => {
   const user = await User.findById(userId);
@@ -59,14 +62,14 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 
   // cloudinary file upload
-  const avatar = await uploadOnCloudinary(avatarLocalPath);
+  const avatar = await uploadFileOnCloudinary(avatarLocalPath);
   let coverImage;
 
   if (!avatar) {
     fs.unlinkSync(coverImageLocalPath);
     throw new apiError(400, "Avatar is Required");
   } else {
-    coverImage = await uploadOnCloudinary(coverImageLocalPath);
+    coverImage = await uploadFileOnCloudinary(coverImageLocalPath);
   }
 
   // new user Creation
@@ -227,11 +230,11 @@ const updatedUserAvatar = asyncHandler(async (req, res) => {
   const avatarLocalPath = req.file?.path;
   if (!avatarLocalPath) throw new apiError(400, "Avatar is required");
 
-  const cloudinaryRes = await uploadOnCloudinary(avatarLocalPath);
+  const cloudinaryRes = await uploadFileOnCloudinary(avatarLocalPath);
 
   if (!cloudinaryRes?.url)
     throw new apiError(500, "Error while uploading avatar");
-
+  await deleteCloudinaryFile(req.user.avatar); //NOTE: assignment from tutorial
   const user = await User.findByIdAndUpdate(
     req.user._id,
     {
@@ -248,10 +251,11 @@ const updatedUserCoverImage = asyncHandler(async (req, res) => {
 
   if (!coverImageLocalPath) throw new apiError(400, "Cover Image is required");
 
-  const coverImage = await uploadOnCloudinary(coverImageLocalPath);
+  const coverImage = await uploadFileOnCloudinary(coverImageLocalPath);
   if (!coverImage?.url)
     throw new apiError(500, "Error while uploading Cover Image");
 
+  await deleteCloudinaryFile(req.user.coverImage); //NOTE: assignment from tutorial
   const user = await User.findByIdAndUpdate(
     req.user._id,
     { $set: { coverImage: coverImage.url } },

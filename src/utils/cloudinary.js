@@ -8,20 +8,35 @@ cloudinary.config({
 });
 
 // Upload a file
-const uploadFile = async (filePath) => {
-    try {
-        if(!filePath) return null;
+const uploadFileOnCloudinary = async (filePath) => {
+  try {
+    if (!filePath) return null;
 
-        // upload in cloudinary
-      const fileResponse = await cloudinary.uploader.upload(filePath, {resource_type: "auto"})
+    // upload in cloudinary
+    const fileResponse = await cloudinary.uploader.upload(filePath, {
+      resource_type: "auto",
+    });
 
-        // if file uploaded remove file from server
-        fs.unlinkSync(filePath)
-        return fileResponse;
-    } catch (error) {
-        fs.unlinkSync(filePath)
-        return null;
-    }
-}
+    // if file uploaded remove file from server
+    fs.unlinkSync(filePath);
+    return fileResponse;
+  } catch (error) {
+    fs.unlinkSync(filePath);
+    return null;
+  }
+};
 
-export default uploadFile
+//NOTE: assignment from tutorial
+const deleteCloudinaryFile = async (url) => {
+  try {
+    if (!url) return;
+    // http://res.cloudinary.com/dvwuableu/image/upload/v1729327636/j8adqg3mzgmty6axjdp1.png
+    const public_id = url.split("/").pop().split(".")[0];
+
+    await cloudinary.uploader.destroy(public_id);
+  } catch (error) {
+    throw error;
+  }
+};
+
+export default { uploadFileOnCloudinary, deleteCloudinaryFile };
