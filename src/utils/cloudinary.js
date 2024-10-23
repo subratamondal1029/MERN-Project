@@ -29,7 +29,10 @@ const uploadFileOnCloudinary = async (filePath) => {
 //NOTE: assignment from tutorial
 const deleteCloudinaryFile = async (url) => {
   try {
-    if (!url) return;
+    if (!url) {
+      console.log(url); //NOTE: Only for testing
+      return;
+    }
     // http://res.cloudinary.com/dvwuableu/image/upload/v1729327636/j8adqg3mzgmty6axjdp1.png
     const public_id = url.split("/").pop().split(".")[0];
 

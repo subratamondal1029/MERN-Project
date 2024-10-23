@@ -104,6 +104,8 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new apiError(400, "username or email is required");
   }
 
+  if (!password) throw new apiError(400, "Password is Required");
+
   const user = await User.findOne({
     $or: [{ username }, { email }],
   });
@@ -222,9 +224,13 @@ const updateUserDetails = asyncHandler(async (req, res) => {
       $set: updatedFields,
     },
     { new: true }
-  ).select("-password refreshToken");
+  );
 
-  res.send(new apiResponse(200, user, "User details updated successfully"));
+  const { password, refreshToken, ...userDetails } = user.toObject();
+
+  res.send(
+    new apiResponse(200, userDetails, "User details updated successfully")
+  );
 });
 
 const updatedUserAvatar = asyncHandler(async (req, res) => {
@@ -236,7 +242,6 @@ const updatedUserAvatar = asyncHandler(async (req, res) => {
   if (!cloudinaryRes?.url)
     throw new apiError(500, "Error while uploading avatar");
 
-  fs.unlinkSync(avatarLocalPath);
   await deleteCloudinaryFile(req.user.avatar); //NOTE: assignment from tutorial
   const user = await User.findByIdAndUpdate(
     req.user._id,
@@ -244,9 +249,13 @@ const updatedUserAvatar = asyncHandler(async (req, res) => {
       $set: { avatar: cloudinaryRes.url },
     },
     { new: true }
-  ).select("-password refreshToken");
+  );
 
-  res.send(new apiResponse(200, user, "User avatar updated successfully"));
+  const { password, refreshToken, ...userDetails } = user.toObject();
+
+  res.send(
+    new apiResponse(200, userDetails, "User avatar updated successfully")
+  );
 });
 
 const updatedUserCoverImage = asyncHandler(async (req, res) => {
@@ -258,15 +267,18 @@ const updatedUserCoverImage = asyncHandler(async (req, res) => {
   if (!coverImage?.url)
     throw new apiError(500, "Error while uploading Cover Image");
 
-  fs.unlinkSync(coverImageLocalPath);
   await deleteCloudinaryFile(req.user.coverImage); //NOTE: assignment from tutorial
   const user = await User.findByIdAndUpdate(
     req.user._id,
     { $set: { coverImage: coverImage.url } },
     { new: true }
-  ).select("-password refreshToken");
+  );
 
-  res.send(new apiResponse(200, user, "User Cover Image updated successfully"));
+  const { password, refreshToken, ...userDetails } = user.toObject();
+
+  res.send(
+    new apiResponse(200, userDetails, "User Cover Image updated successfully")
+  );
 });
 
 const channelProfileDetails = asyncHandler(async (req, res) => {
@@ -326,9 +338,6 @@ const channelProfileDetails = asyncHandler(async (req, res) => {
     },
   ]);
 
-  // NOTE: for learning
-  console.log("channelDetails Optput::", channelDetails);
-
   if (!channelDetails?.length)
     throw new apiError(404, "Channel Does Not Exist");
 
@@ -347,6 +356,8 @@ const userWatchHistory = asyncHandler(async (req, res) => {
       $match: {
         _id: new mongoose.Types.ObjectId(req.user._id),
       },
+    },
+    {
       $lookup: {
         from: "videos",
         localField: "watchHistory",
@@ -369,12 +380,6 @@ const userWatchHistory = asyncHandler(async (req, res) => {
                 },
               ],
             },
-            //TODO: Test this part
-            // $project: {
-            //   fullName: 1,
-            //   username: 1,
-            //   avatar: 1
-            // },
           },
           {
             $addFields: {
@@ -388,8 +393,8 @@ const userWatchHistory = asyncHandler(async (req, res) => {
     },
   ]);
 
-  // NOTE: check two way with pipeline
-  console.log("userWatchHistory:", userWatchHistory);
+  // NOTE: only for testing
+  console.log("userWatchHistory:", user[0].watchHistory);
 
   return res.json(
     new apiResponse(

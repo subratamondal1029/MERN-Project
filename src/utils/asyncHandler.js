@@ -10,16 +10,15 @@ import apiError from "./apiError.js";
 //   }
 // };
 
-const asyncHandler = (fn) => (
-  (req, res, next) => {
-    Promise.resolve(fn(req, res, next)).catch((err) => {
-      const error = new apiError(err.statusCode, err.message || "Internal Server Error")
+const asyncHandler = (fn) => (req, res, next) => {
+  Promise.resolve(fn(req, res, next)).catch((err) => {
+    const error = new apiError(
+      err.statusCode,
+      err.message || "Internal Server Error"
+    );
 
-      res
-        .status(error.statusCode || 500)
-        .json(error);
-    });
-  }
-);
+    res.status(error.statusCode || 500).json(error);
+  });
+};
 
 export default asyncHandler;
