@@ -17,6 +17,9 @@ const asyncHandler = (fn) => (req, res, next) => {
       err.message || "Internal Server Error"
     );
 
+    // NOTE: for testing perpose only
+    console.log(err);
+
     res.status(error.statusCode || 500).json(error);
   });
 };
